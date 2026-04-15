@@ -1,0 +1,105 @@
+// Deneme Sınavı Takip - Veritabanı Şeması
+// SQLite + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Öğrenci tablosu - LGS ve TYT/AYT profilleri
+// ============================================
+model Student {
+  id        Int      @id @default(autoincrement())
+  name      String                              // Öğrenci adı
+  examType  String   @map("exam_type")          // LGS | TYT | AYT
+  avatar    String   @default("📚")             // Profil ikonu
+  createdAt DateTime @default(now()) @map("created_at")
+  exams     Exam[]
+
+  @@map("students")
+}
+
+// ============================================
+// Ders tablosu - Her sınav türünün dersleri
+// ============================================
+model Subject {
+  id             Int          @id @default(autoincrement())
+  name           String                           // Ders adı (Türkçe, Matematik vb.)
+  examType       String       @map("exam_type")   // LGS | TYT | AYT
+  totalQuestions  Int          @map("total_questions") // Sınavdaki soru sayısı
+  coefficient    Float        @default(1.0)       // Katsayı (LGS için farklılık var)
+  displayOrder   Int          @default(0) @map("display_order") // Gösterim sırası
+  topics         Topic[]
+  examResults    ExamResult[]
+
+  @@map("subjects")
+}
+
+// ============================================
+// Konu tablosu - MEB müfredatına uygun alt başlıklar
+// ============================================
+model Topic {
+  id               Int                @id @default(autoincrement())
+  subjectId        Int                @map("subject_id")
+  name             String                         // Konu adı
+  subject          Subject            @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questionAnalyses QuestionAnalysis[]
+
+  @@map("topics")
+}
+
+// ============================================
+// Deneme tablosu - Her bir deneme sınavı kaydı
+// ============================================
+model Exam {
+  id           Int          @id @default(autoincrement())
+  studentId    Int          @map("student_id")
+  examName     String       @map("exam_name")       // "Paragraf Yayınları Deneme 5" vb.
+  examCategory String       @map("exam_category")   // LGS | TYT | AYT
+  examDate     DateTime     @map("exam_date")        // Sınav tarihi
+  totalNet     Float        @default(0) @map("total_net") // Toplam net (otomatik hesaplanır)
+  createdAt DateTime     @default(now()) @map("created_at")
+  student   Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  results   ExamResult[]
+
+  @@map("exams")
+}
+
+// ============================================
+// Ders bazlı sonuç tablosu - Her denemenin ders sonuçları
+// ============================================
+model ExamResult {
+  id             Int                @id @default(autoincrement())
+  examId         Int                @map("exam_id")
+  subjectId      Int                @map("subject_id")
+  totalQuestions Int                @map("total_questions")  // O dersteki toplam soru
+  wrongCount     Int                @default(0) @map("wrong_count")   // Yanlış sayısı
+  blankCount     Int                @default(0) @map("blank_count")   // Boş sayısı
+  correctCount   Int                @default(0) @map("correct_count") // Doğru (otomatik)
+  netScore       Float              @default(0) @map("net_score")     // Net = D - Y/4 veya D - Y/3
+  exam           Exam               @relation(fields: [examId], references: [id], onDelete: Cascade)
+  subject        Subject            @relation(fields: [subjectId], references: [id])
+  analyses       QuestionAnalysis[]
+
+  @@map("exam_results")
+}
+
+// ============================================
+// Konu bazlı analiz tablosu - Hangi konudan kaç yanlış/boş
+// ============================================
+model QuestionAnalysis {
+  id           Int        @id @default(autoincrement())
+  examResultId Int        @map("exam_result_id")
+  topicId      Int        @map("topic_id")
+  wrongCount   Int        @default(0) @map("wrong_count")  // O konudan yanlış
+  blankCount   Int        @default(0) @map("blank_count")  // O konudan boş
+  examResult   ExamResult @relation(fields: [examResultId], references: [id], onDelete: Cascade)
+  topic        Topic      @relation(fields: [topicId], references: [id])
+
+  @@map("question_analysis")
+}
