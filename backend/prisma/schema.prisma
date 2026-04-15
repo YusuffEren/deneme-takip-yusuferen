@@ -1,13 +1,14 @@
 // Deneme Sınavı Takip - Veritabanı Şeması
-// PostgreSQL + Prisma ORM
+// Supabase PostgreSQL + Prisma ORM
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================
