@@ -1,12 +1,12 @@
 // Deneme Sınavı Takip - Veritabanı Şeması
-// SQLite + Prisma ORM
+// PostgreSQL + Prisma ORM
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

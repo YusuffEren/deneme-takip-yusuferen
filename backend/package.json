@@ -5,12 +5,19 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "setup": "npx prisma migrate dev --name init && node prisma/seed.js",
+    "build": "npx prisma generate",
+    "postinstall": "npx prisma generate",
+    "db:push": "npx prisma db push",
+    "db:migrate": "npx prisma migrate deploy",
+    "setup": "npx prisma db push && node prisma/seed.js",
     "seed": "node prisma/seed.js",
     "studio": "npx prisma studio"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

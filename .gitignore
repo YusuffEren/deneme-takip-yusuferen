@@ -27,4 +27,4 @@ Thumbs.db
 npm-debug.log*
 
 # Prisma
-backend/prisma/migrations/**/migration_lock.toml
+backend/prisma/migrations/
