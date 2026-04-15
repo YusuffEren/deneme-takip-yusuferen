@@ -176,11 +176,9 @@ export default function ExamEntry() {
   return (
     <Layout studentId={studentId}>
       <form onSubmit={handleSubmit}>
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Yeni Deneme Ekle</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-1">Yanlış ve boş sayılarını gir, doğru ve net otomatik hesaplansın</p>
-          </div>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Yeni Deneme Ekle</h1>
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-1">Yanlış ve boş sayılarını gir, net otomatik hesaplansın</p>
         </div>
 
         <div className="glass-card p-6 mb-6">
@@ -222,22 +220,28 @@ export default function ExamEntry() {
           </div>
         </div>
 
-        <div className="sticky top-0 md:top-0 z-20 mb-6">
-          <div className="glass-card p-4 flex items-center justify-between border-indigo-500/20">
-            <div className="flex items-center gap-4">
-              <span className="text-2xl">🎯</span>
+        <div className="sticky top-14 md:top-0 z-20 mb-6">
+          <div className="glass-card p-3 sm:p-4 flex items-center justify-between border-indigo-500/20">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className="text-xl sm:text-2xl">🎯</span>
               <div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Toplam Net</p>
-                <p className="text-3xl font-black gradient-text">{totalNet.toFixed(1)}</p>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Toplam Net</p>
+                <p className="text-2xl sm:text-3xl font-black gradient-text">{totalNet.toFixed(1)}</p>
               </div>
             </div>
-            <button type="submit" disabled={submitting || !examName.trim()} className="btn-primary">
+            <button type="submit" disabled={submitting || !examName.trim()} className="btn-primary text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3">
               {submitting ? (
                 <span className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Kaydediliyor...
+                  <span className="hidden sm:inline">Kaydediliyor...</span>
+                  <span className="sm:hidden">...</span>
                 </span>
-              ) : '💾 Kaydet'}
+              ) : (
+                <>
+                  <span className="hidden sm:inline">💾 Kaydet</span>
+                  <span className="sm:hidden">💾</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -258,48 +262,53 @@ export default function ExamEntry() {
 
                 return (
                   <div key={subject.id} className="glass-card overflow-hidden">
-                    <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className="flex items-center gap-3 sm:w-48 flex-shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-sm font-bold text-indigo-500 dark:text-indigo-400">
-                          {subject.totalQuestions}
+                    <div className="p-4">
+                      {/* Ders başlığı ve soru sayısı */}
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-sm font-bold text-indigo-500 dark:text-indigo-400 flex-shrink-0">
+                            {subject.totalQuestions}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900 dark:text-white text-sm">{subject.name}</p>
+                            <p className="text-xs text-slate-500">{subject.examType}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-slate-900 dark:text-white text-sm">{subject.name}</p>
-                          <p className="text-xs text-slate-500">{subject.examType}</p>
-                        </div>
+                        
+                        {/* Konu analizi butonu - mobilde üstte */}
+                        {hasErrors && subject.topics?.length > 0 && (
+                          <button type="button" onClick={() => setExpandedSubject(isExpanded ? null : subject.id)}
+                            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isExpanded ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10'}`}>
+                            {isExpanded ? '▲ Kapat' : '▼ Konu'}
+                          </button>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="flex-1">
-                          <label className="block text-[10px] text-rose-500 dark:text-rose-400 mb-1 font-medium">YANLIŞ</label>
+                      {/* Input alanları - 4 sütun grid */}
+                      <div className="grid grid-cols-4 gap-2">
+                        <div>
+                          <label className="block text-[10px] text-rose-500 dark:text-rose-400 mb-1 font-medium text-center">YANLIŞ</label>
                           <input type="number" min="0" max={subject.totalQuestions} value={result.wrongCount || ''} onChange={e => updateSubjectResult(subject.id, 'wrongCount', e.target.value)} placeholder="0"
-                            className="w-full px-3 py-2 bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-lg text-slate-900 dark:text-white text-center font-bold focus:outline-none focus:border-rose-500/50 transition-all" />
+                            className="w-full px-2 py-2 bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-lg text-slate-900 dark:text-white text-center font-bold text-sm focus:outline-none focus:border-rose-500/50 transition-all" />
                         </div>
-                        <div className="flex-1">
-                          <label className="block text-[10px] text-amber-500 dark:text-amber-400 mb-1 font-medium">BOŞ</label>
+                        <div>
+                          <label className="block text-[10px] text-amber-500 dark:text-amber-400 mb-1 font-medium text-center">BOŞ</label>
                           <input type="number" min="0" max={subject.totalQuestions} value={result.blankCount || ''} onChange={e => updateSubjectResult(subject.id, 'blankCount', e.target.value)} placeholder="0"
-                            className="w-full px-3 py-2 bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 rounded-lg text-slate-900 dark:text-white text-center font-bold focus:outline-none focus:border-amber-500/50 transition-all" />
+                            className="w-full px-2 py-2 bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 rounded-lg text-slate-900 dark:text-white text-center font-bold text-sm focus:outline-none focus:border-amber-500/50 transition-all" />
                         </div>
-                        <div className="flex-1">
-                          <label className="block text-[10px] text-emerald-500 dark:text-emerald-400 mb-1 font-medium">DOĞRU</label>
-                          <div className="px-3 py-2 bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-200 dark:border-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-400 text-center font-bold">
+                        <div>
+                          <label className="block text-[10px] text-emerald-500 dark:text-emerald-400 mb-1 font-medium text-center">DOĞRU</label>
+                          <div className="px-2 py-2 bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-200 dark:border-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-400 text-center font-bold text-sm">
                             {correct}
                           </div>
                         </div>
-                        <div className="flex-1">
-                          <label className="block text-[10px] text-indigo-500 dark:text-indigo-400 mb-1 font-medium">NET</label>
-                          <div className="px-3 py-2 bg-indigo-50 dark:bg-indigo-500/5 border border-indigo-200 dark:border-indigo-500/20 rounded-lg text-indigo-600 dark:text-indigo-400 text-center font-bold">
+                        <div>
+                          <label className="block text-[10px] text-indigo-500 dark:text-indigo-400 mb-1 font-medium text-center">NET</label>
+                          <div className="px-2 py-2 bg-indigo-50 dark:bg-indigo-500/5 border border-indigo-200 dark:border-indigo-500/20 rounded-lg text-indigo-600 dark:text-indigo-400 text-center font-bold text-sm">
                             {net.toFixed(1)}
                           </div>
                         </div>
                       </div>
-
-                      {hasErrors && subject.topics?.length > 0 && (
-                        <button type="button" onClick={() => setExpandedSubject(isExpanded ? null : subject.id)}
-                          className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isExpanded ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10'}`}>
-                          {isExpanded ? '▲ Kapat' : '▼ Konu Analizi'}
-                        </button>
-                      )}
                     </div>
 
                     {isExpanded && subject.topics && (
@@ -328,18 +337,20 @@ export default function ExamEntry() {
           </div>
         ))}
 
-        <div className="glass-card p-6 flex items-center justify-between">
-          <button type="button" onClick={() => navigate(`/dashboard/${studentId}`)} className="btn-secondary">
-            ← İptal
-          </button>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm text-slate-600 dark:text-slate-400">Toplam Net</p>
-              <p className="text-2xl font-black gradient-text">{totalNet.toFixed(1)}</p>
-            </div>
-            <button type="submit" disabled={submitting || !examName.trim()} className="btn-primary text-lg px-8 py-4">
-              {submitting ? 'Kaydediliyor...' : '💾 Denemeyi Kaydet'}
+        <div className="glass-card p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <button type="button" onClick={() => navigate(`/dashboard/${studentId}`)} className="btn-secondary order-2 sm:order-1">
+              ← İptal
             </button>
+            <div className="flex items-center justify-between sm:justify-end gap-4 order-1 sm:order-2">
+              <div className="text-left sm:text-right">
+                <p className="text-sm text-slate-600 dark:text-slate-400">Toplam Net</p>
+                <p className="text-2xl font-black gradient-text">{totalNet.toFixed(1)}</p>
+              </div>
+              <button type="submit" disabled={submitting || !examName.trim()} className="btn-primary text-base sm:text-lg px-4 sm:px-8 py-3 sm:py-4">
+                {submitting ? 'Kaydediliyor...' : '💾 Kaydet'}
+              </button>
+            </div>
           </div>
         </div>
       </form>

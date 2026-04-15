@@ -234,4 +234,81 @@ input:focus-visible {
   color: inherit;
 }
 
+/* Better touch targets for mobile */
+@media (max-width: 640px) {
+  button, a, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Ensure minimum touch target size */
+  button:not(.inline-btn), 
+  a:not(.inline-link),
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 44px;
+  }
+}
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Slide up animation */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Hide scrollbar but keep functionality on mobile for cleaner look */
+@media (max-width: 640px) {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Orbs resize for mobile */
+@media (max-width: 640px) {
+  .orb-1 {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .orb-2 {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .orb-3 {
+    width: 150px;
+    height: 150px;
+  }
+}
+
 

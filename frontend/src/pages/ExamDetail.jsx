@@ -165,64 +165,64 @@ export default function ExamDetail() {
       )}
 
       {/* Üst Bilgi Başlığı */}
-      <div className="mb-8 relative z-10">
-        <div className="flex items-center justify-between mb-2">
+      <div className="mb-6 sm:mb-8 relative z-10">
+        <div className="flex items-center justify-between mb-3">
           <button 
             onClick={() => navigate(`/dashboard/${exam.studentId}`)}
-            className="text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors flex items-center gap-1"
+            className="text-xs sm:text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors flex items-center gap-1"
           >
-            ← Dashboard'a Dön
+            ← <span className="hidden sm:inline">Dashboard'a Dön</span><span className="sm:hidden">Geri</span>
           </button>
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            Sil
+            <span className="hidden sm:inline">Sil</span>
           </button>
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{exam.examName}</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+            <h1 className="text-xl sm:text-3xl font-bold text-slate-900 dark:text-white">{exam.examName}</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2 text-sm">
               <span className="inline-block w-2 h-2 rounded-full bg-indigo-500"></span>
               {format(new Date(exam.examDate), 'd MMMM yyyy', { locale: tr })}
             </p>
           </div>
-          <div className="flex items-center gap-6 glass-card px-6 py-3">
+          <div className="flex items-center gap-4 sm:gap-6 glass-card px-4 sm:px-6 py-3 self-start">
             <div className="text-center">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Toplam Soru</p>
-              <p className="font-bold text-slate-800 dark:text-white text-lg">{totalQuestions}</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mb-1">Toplam Soru</p>
+              <p className="font-bold text-slate-800 dark:text-white text-base sm:text-lg">{totalQuestions}</p>
             </div>
             <div className="w-px h-8 bg-slate-200 dark:bg-white/10" />
             <div className="text-center">
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Toplam Net</p>
-              <p className="font-black text-2xl gradient-text">{exam.totalNet.toFixed(1)}</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mb-1">Toplam Net</p>
+              <p className="font-black text-xl sm:text-2xl gradient-text">{exam.totalNet.toFixed(1)}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Grafikler Alanı */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         
         {/* Net Dağılım Çubuğu */}
-        <div className="glass-card p-6 lg:col-span-2 flex flex-col justify-center">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4">📊 Ders Bazlı Dağılım</h2>
-          <div className="space-y-4">
+        <div className="glass-card p-4 sm:p-6 lg:col-span-2 flex flex-col justify-center">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white mb-3 sm:mb-4">📊 Ders Bazlı Dağılım</h2>
+          <div className="space-y-3 sm:space-y-4">
             {exam.results.map(r => {
               const maxScore = r.totalQuestions;
               const ratio = Math.max(0, (r.netScore / maxScore) * 100);
               
               return (
                 <div key={r.id}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium text-slate-700 dark:text-slate-300">{r.subject.name}</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{r.netScore.toFixed(1)} <span className="text-slate-400 text-xs font-normal">/ {maxScore}</span></span>
+                  <div className="flex justify-between text-xs sm:text-sm mb-1">
+                    <span className="font-medium text-slate-700 dark:text-slate-300 truncate mr-2">{r.subject.name}</span>
+                    <span className="font-bold text-slate-900 dark:text-white flex-shrink-0">{r.netScore.toFixed(1)} <span className="text-slate-400 text-[10px] sm:text-xs font-normal">/ {maxScore}</span></span>
                   </div>
-                  <div className="h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-1.5 sm:h-2 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000"
                       style={{ width: `${ratio}%` }}
@@ -235,9 +235,9 @@ export default function ExamDetail() {
         </div>
 
         {/* Pasta Grafiği (Doğru Yanlış Boş Genel) */}
-        <div className="glass-card p-6 flex flex-col items-center justify-center">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4 w-full">🎯 Genel Dağılım</h2>
-          <div className="w-full h-48 relative">
+        <div className="glass-card p-4 sm:p-6 flex flex-col items-center justify-center">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white mb-3 sm:mb-4 w-full">🎯 Genel Dağılım</h2>
+          <div className="w-full h-40 sm:h-48 relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -258,15 +258,15 @@ export default function ExamDetail() {
             
             {/* Ortadaki Net Yazısı */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-black text-slate-800 dark:text-white leading-none mb-1">{exam.totalNet.toFixed(1)}</span>
-              <span className="text-[10px] text-slate-500 font-bold tracking-wider">NET</span>
+              <span className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white leading-none mb-1">{exam.totalNet.toFixed(1)}</span>
+              <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold tracking-wider">NET</span>
             </div>
           </div>
           
-          <div className="flex justify-center gap-4 mt-2 w-full">
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mt-2 w-full">
             {pieData.map((d, i) => (
-              <div key={d.name} className="flex items-center gap-1.5 text-xs font-medium">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></span>
+              <div key={d.name} className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-medium">
+                <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></span>
                 <span className="text-slate-600 dark:text-slate-400">{d.name}: <strong className="text-slate-900 dark:text-white">{d.value}</strong></span>
               </div>
             ))}
@@ -275,20 +275,20 @@ export default function ExamDetail() {
       </div>
 
       {/* Ders ve Konu Detayları Tablosu */}
-      <div className="glass-card overflow-hidden mb-8">
-        <div className="p-6 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02]">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white">📋 Ders Bazlı Sonuçlar</h2>
+      <div className="glass-card overflow-hidden mb-6 sm:mb-8">
+        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02]">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">📋 Ders Bazlı Sonuçlar</h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
+          <table className="w-full text-left text-xs sm:text-sm border-collapse min-w-[400px]">
             <thead>
               <tr className="border-b border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 bg-slate-100/50 dark:bg-white/[0.01]">
-                <th className="py-3 px-4 font-semibold">Ders</th>
-                <th className="py-3 px-4 text-center font-semibold text-indigo-600 dark:text-indigo-400">Soru</th>
-                <th className="py-3 px-4 text-center font-semibold text-emerald-600 dark:text-emerald-400">D</th>
-                <th className="py-3 px-4 text-center font-semibold text-rose-600 dark:text-rose-400">Y</th>
-                <th className="py-3 px-4 text-center font-semibold text-amber-600 dark:text-amber-400">B</th>
-                <th className="py-3 px-4 text-center font-semibold text-slate-800 dark:text-white">NET</th>
+                <th className="py-2 sm:py-3 px-2 sm:px-4 font-semibold">Ders</th>
+                <th className="py-2 sm:py-3 px-2 sm:px-4 text-center font-semibold text-indigo-600 dark:text-indigo-400">Soru</th>
+                <th className="py-2 sm:py-3 px-2 sm:px-4 text-center font-semibold text-emerald-600 dark:text-emerald-400">D</th>
+                <th className="py-2 sm:py-3 px-2 sm:px-4 text-center font-semibold text-rose-600 dark:text-rose-400">Y</th>
+                <th className="py-2 sm:py-3 px-2 sm:px-4 text-center font-semibold text-amber-600 dark:text-amber-400">B</th>
+                <th className="py-2 sm:py-3 px-2 sm:px-4 text-center font-semibold text-slate-800 dark:text-white">NET</th>
               </tr>
             </thead>
             <tbody>
@@ -296,26 +296,28 @@ export default function ExamDetail() {
                 const correct = r.totalQuestions - r.wrongCount - r.blankCount;
                 return (
                   <tr key={r.id} className="border-b border-slate-100 dark:border-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3 px-4 font-medium text-slate-800 dark:text-white">{r.subject.name}</td>
-                    <td className="py-3 px-4 text-center font-bold text-slate-600 dark:text-slate-300">{r.totalQuestions}</td>
-                    <td className="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">{correct}</td>
-                    <td className="py-3 px-4 text-center font-bold text-rose-600 dark:text-rose-400">{r.wrongCount}</td>
-                    <td className="py-3 px-4 text-center font-bold text-amber-600 dark:text-amber-400">{r.blankCount}</td>
-                    <td className="py-3 px-4 text-center font-black text-slate-900 dark:text-white">{r.netScore.toFixed(1)}</td>
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 font-medium text-slate-800 dark:text-white truncate max-w-[120px] sm:max-w-none">{r.subject.name}</td>
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-bold text-slate-600 dark:text-slate-300">{r.totalQuestions}</td>
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">{correct}</td>
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-bold text-rose-600 dark:text-rose-400">{r.wrongCount}</td>
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-bold text-amber-600 dark:text-amber-400">{r.blankCount}</td>
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-black text-slate-900 dark:text-white">{r.netScore.toFixed(1)}</td>
                   </tr>
                 );
               })}
               
               {/* Toplam Satırı */}
               <tr className="bg-slate-100 dark:bg-indigo-500/10 border-t border-slate-200 dark:border-indigo-500/20">
-                <td className="py-3 px-4 font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                  <span className="text-lg">📊</span> GENEL TOPLAM
+                <td className="py-2 sm:py-3 px-2 sm:px-4 font-bold text-slate-800 dark:text-white">
+                  <span className="flex items-center gap-1 sm:gap-2">
+                    <span className="text-sm sm:text-lg">📊</span> <span className="hidden sm:inline">GENEL TOPLAM</span><span className="sm:hidden">TOPLAM</span>
+                  </span>
                 </td>
-                <td className="py-3 px-4 text-center font-black text-slate-600 dark:text-slate-300">{totalQuestions}</td>
-                <td className="py-3 px-4 text-center font-black text-emerald-600 dark:text-emerald-400">{totalCorrect}</td>
-                <td className="py-3 px-4 text-center font-black text-rose-600 dark:text-rose-400">{totalWrong}</td>
-                <td className="py-3 px-4 text-center font-black text-amber-600 dark:text-amber-400">{totalBlank}</td>
-                <td className="py-3 px-4 text-center font-black text-lg gradient-text">{exam.totalNet.toFixed(1)}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-black text-slate-600 dark:text-slate-300">{totalQuestions}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-black text-emerald-600 dark:text-emerald-400">{totalCorrect}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-black text-rose-600 dark:text-rose-400">{totalWrong}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-black text-amber-600 dark:text-amber-400">{totalBlank}</td>
+                <td className="py-2 sm:py-3 px-2 sm:px-4 text-center font-black text-base sm:text-lg gradient-text">{exam.totalNet.toFixed(1)}</td>
               </tr>
             </tbody>
           </table>
@@ -324,14 +326,14 @@ export default function ExamDetail() {
 
       {exam.topicAnalyses?.length > 0 && (
         <div className="glass-card overflow-hidden">
-          <div className="p-6 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02]">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <span className="text-xl">🔍</span> Konu Bazlı Hata Analizi
+          <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02]">
+            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <span className="text-lg sm:text-xl">🔍</span> Konu Bazlı Hata Analizi
             </h2>
-            <p className="text-xs text-slate-500 mt-1">Hangi konularda eksik olduğunu buradan detaylı görebilirsin.</p>
+            <p className="text-[10px] sm:text-xs text-slate-500 mt-1">Hangi konularda eksik olduğunu buradan görebilirsin.</p>
           </div>
           
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             {exam.topicAnalyses.map(a => (
               <div key={a.id} className={`p-4 rounded-xl border transition-all hover:scale-[1.02] ${a.wrongCount > 0 ? 'bg-rose-50 dark:bg-rose-500/5 border-rose-200 dark:border-rose-500/20' : 'bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20'}`}>
                 <div className="flex justify-between items-start mb-3 gap-2">
