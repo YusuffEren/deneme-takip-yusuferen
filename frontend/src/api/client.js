@@ -3,19 +3,19 @@ import axios from 'axios';
 // API URL önceliği:
 // 1) VITE_API_URL environment variable (Render/Vercel build ayarı)
 // 2) Geliştirme: Vite proxy ('/api' -> localhost:8000)
-// 3) Production fallback: Render'daki backend (env unutulsa bile site çalışır)
+// 3) Production fallback: Vercel'daki backend (env unutulsa bile site çalışır)
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV
     ? '/api'
-    : 'https://deneme-takip-yusuferen.onrender.com/api');
+    : 'https://deneme-takip-yusuferen.vercel.app/api');
 
 // Axios instance
-// Not: Ücretsiz Render servisleri uyur; ilk istek ~50 sn sürebilir.
-// Bu yüzden timeout 75 sn — sayfa sonsuza kadar dönen yükleme ekranında kalmaz.
+// Not: Backend Vercel serverless — uyumaz, istekler anında cevaplanır.
+// Yine de olası ağ gecikmelerine karşı makul bir timeout tanımlı.
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 75000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },

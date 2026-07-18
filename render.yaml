@@ -1,17 +1,13 @@
-# Render Blueprint - Deneme Takip
-# Render Dashboard > New > Blueprint > bu repo'yu seç > Apply
-# Mevcut servisler isimleri eşleştiği için otomatik olarak bu blueprint'e bağlanır.
+# Render Blueprint - Deneme Takip (YEDEK / alternatif senaryo)
 #
-# ÜCRETSİZ NOTLAR:
-# - Free PostgreSQL 30 gün sonra silinir (Render e-posta ile uyarır).
-#   Silinirse: yeni free DB oluşturup DATABASE_URL'i güncellemek yeterli.
-# - Free web servisleri 15 dk hareketsizlikte uyur; ilk açılış ~50 sn sürebilir.
-
-databases:
-  - name: deneme-takip-db
-    plan: free
-    databaseName: deneme_takip
-    user: deneme_takip
+# NOT: Ana kurulum artık Vercel (backend) + Neon (veritabanı) — bkz. KURULUM.md
+# Bu dosya sadece backend'i Render'da çalıştırmak isterseniz diye duruyor.
+#
+# ÖNEMLİ: Render'ın ücretsiz PostgreSQL'i 30 gün sonra SİLİNİR.
+# Bu yüzden veritabanı burada tanımlı DEĞİL; Neon'dan aldığınız
+# DATABASE_URL'i Render Dashboard > Environment kısmına elle girin.
+# Ayrıca ücretsiz Render servisleri 15 dk'da uyur (uyandırmak için
+# UptimeRobot gibi bir servisle 5 dk'da bir /api/health pingletin).
 
 services:
   # ============================================
@@ -28,9 +24,7 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: deneme-takip-db
-          property: connectionString
+        sync: false   # Neon bağlantı adresini Dashboard'dan girin
       - key: CORS_ORIGINS
         value: "https://deneme-takip-yusuferen-1.onrender.com"
       - key: PYTHON_VERSION
@@ -39,6 +33,7 @@ services:
   # ============================================
   # FRONTEND - React/Vite (Statik Site)
   # URL: https://deneme-takip-yusuferen-1.onrender.com
+  # Statik siteler uyumaz, anında açılır.
   # ============================================
   - type: web
     name: deneme-takip-yusuferen-1
@@ -54,4 +49,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: "https://deneme-takip-yusuferen.onrender.com/api"
+        sync: false   # Vercel backend adresini Dashboard'dan girin
