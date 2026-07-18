@@ -40,6 +40,7 @@ class Student(Base):
     daily_questions = relationship("DailyQuestion", back_populates="student", cascade="all, delete-orphan")
     study_sessions = relationship("StudySession", back_populates="student", cascade="all, delete-orphan")
     goals = relationship("Goal", back_populates="student", cascade="all, delete-orphan")
+    topic_progress = relationship("TopicProgress", back_populates="student", cascade="all, delete-orphan")
 
 
 # ============================================
@@ -204,4 +205,25 @@ class Goal(Base):
     __table_args__ = (
         UniqueConstraint('student_id', 'goal_type', 'metric_type', 'subject_id',
                         name='uq_goal_entry'),
+    )
+
+
+# ============================================
+# Konu tamamlama takibi
+# Öğrencinin "bitirdim" diye işaretlediği konular
+# ============================================
+class TopicProgress(Base):
+    __tablename__ = "topic_progress"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    topic_id = Column(Integer, ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
+    completed_at = Column(DateTime, default=datetime.utcnow)
+
+    # İlişkiler
+    student = relationship("Student", back_populates="topic_progress")
+    topic = relationship("Topic")
+
+    __table_args__ = (
+        UniqueConstraint('student_id', 'topic_id', name='uq_topic_progress'),
     )

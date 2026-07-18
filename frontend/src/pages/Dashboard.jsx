@@ -15,8 +15,20 @@ import Layout from '../components/Layout';
 import { SkeletonCard, SkeletonChart, SkeletonList } from '../components/Skeleton';
 import {
   getStudent, getSummary, getMonthlyTrend, getSubjectProgress,
-  getWeakTopics, getExams, getWeeklyReport
+  getWeakTopics, getExams, getWeeklyReport, getStreak, getMissingDays, getBadges
 } from '../api/client';
+
+// Tahmini sınav tarihleri (resmi takvim açıklanınca güncellenir)
+const EXAM_DATES = {
+  LGS: { date: '2027-06-06', label: 'LGS' },
+  TYT: { date: '2027-06-12', label: 'YKS (TYT/AYT)' },
+};
+
+function getDaysLeft(examType) {
+  const info = EXAM_DATES[examType === 'LGS' ? 'LGS' : 'TYT'];
+  const diff = new Date(info.date) - new Date();
+  return { ...info, daysLeft: Math.max(0, Math.ceil(diff / 86400000)) };
+}
 
 const monthNames = {
   '01': 'Oca', '02': 'Şub', '03': 'Mar', '04': 'Nis',
@@ -63,6 +75,9 @@ export default function Dashboard() {
   const [weakTopics, setWeakTopics] = useState([]);
   const [recentExams, setRecentExams] = useState([]);
   const [weeklyReport, setWeeklyReport] = useState(null);
+  const [streak, setStreak] = useState(null);
+  const [missingDays, setMissingDays] = useState(null);
+  const [badges, setBadges] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -82,8 +97,11 @@ export default function Dashboard() {
       getWeakTopics(studentId, category),
       getExams(studentId, category),
       getWeeklyReport(studentId, 0),
+      getStreak(studentId),
+      getMissingDays(studentId, 7),
+      getBadges(studentId),
     ])
-      .then(([summaryRes, trendRes, progressRes, weakRes, examsRes, weeklyRes]) => {
+      .then(([summaryRes, trendRes, progressRes, weakRes, examsRes, weeklyRes, streakRes, missingRes, badgesRes]) => {
         setSummary(summaryRes.data);
         setTrend(trendRes.data.map(t => ({
           ...t,
@@ -93,6 +111,9 @@ export default function Dashboard() {
         setWeakTopics(weakRes.data);
         setRecentExams(examsRes.data.slice(0, 10));
         setWeeklyReport(weeklyRes.data);
+        setStreak(streakRes.data);
+        setMissingDays(missingRes.data);
+        setBadges(badgesRes.data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -155,6 +176,66 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* MOTİVASYON SATIRI - Sınav Sayacı + Streak */}
+      {student && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="glass-card p-4 sm:p-5 flex items-center gap-4 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 dark:from-indigo-500/[0.06] dark:to-purple-500/[0.06]">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0">
+              ⏳
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                {getDaysLeft(student.examType).label} sınavına kalan süre
+              </p>
+              <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                {getDaysLeft(student.examType).daysLeft} <span className="text-sm font-semibold text-slate-500">gün</span>
+              </p>
+            </div>
+            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 text-right flex-shrink-0">
+              {format(new Date(getDaysLeft(student.examType).date), 'd MMMM yyyy', { locale: tr })}<br />(tahmini)
+            </p>
+          </div>
+
+          <div className="glass-card p-4 sm:p-5 flex items-center gap-4 bg-gradient-to-r from-orange-500/5 to-rose-500/5 dark:from-orange-500/[0.06] dark:to-rose-500/[0.06]">
+            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl flex-shrink-0 ${streak?.currentStreak > 0 ? 'bg-orange-100 dark:bg-orange-500/20' : 'bg-slate-100 dark:bg-white/10 grayscale'}`}>
+              🔥
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Çalışma serisi</p>
+              <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                {streak?.currentStreak || 0} <span className="text-sm font-semibold text-slate-500">gün üst üste</span>
+              </p>
+            </div>
+            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 text-right flex-shrink-0">
+              Rekor<br /><span className="font-bold text-slate-600 dark:text-slate-300">{streak?.longestStreak || 0} gün</span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* EKSİK GÜN UYARISI */}
+      {missingDays?.missingCount > 0 && (
+        <div className="mb-6 sm:mb-8 p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-500/[0.06] border border-amber-200 dark:border-amber-500/20 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <span className="text-2xl flex-shrink-0">⚠️</span>
+            <div className="min-w-0">
+              <p className="font-bold text-amber-800 dark:text-amber-300 text-sm sm:text-base">
+                Son 7 günün {missingDays.missingCount} gününde veri girilmemiş
+              </p>
+              <p className="text-xs sm:text-sm text-amber-700/80 dark:text-amber-400/70 mt-0.5 truncate">
+                {missingDays.missingDays.map((d) => d.dayName).join(', ')} — düzenli giriş analizleri doğru tutar
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate(`/daily/${studentId}`)}
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-colors flex-shrink-0 self-start sm:self-center"
+          >
+            Şimdi Gir
+          </button>
+        </div>
+      )}
 
       {/* İSTATİSTİK KARTLARI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
@@ -388,6 +469,64 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* ROZETLER */}
+      {badges && badges.badges?.length > 0 && (
+        <div className="glass-card overflow-hidden mt-4 sm:mt-6">
+          <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 bg-gradient-to-r from-amber-500/5 to-transparent dark:from-amber-500/[0.03]">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🏅</span>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Rozetler</h2>
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400">
+                {badges.earnedCount}/{badges.totalCount} kazanıldı
+              </span>
+            </div>
+            <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4">Çalıştıkça yeni rozetler kazan</p>
+          </div>
+          <div className="p-4 sm:p-6 pt-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {badges.badges.map((badge) => (
+                <div
+                  key={badge.id}
+                  title={badge.description}
+                  className={`p-3 sm:p-4 rounded-2xl border text-center transition-all ${badge.earned
+                    ? 'bg-gradient-to-b from-amber-50 to-white dark:from-amber-500/10 dark:to-transparent border-amber-200 dark:border-amber-500/30 shadow-sm'
+                    : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 opacity-70'
+                    }`}
+                >
+                  <span className={`text-3xl block mb-2 ${badge.earned ? '' : 'grayscale opacity-50'}`}>
+                    {badge.icon}
+                  </span>
+                  <p className={`text-xs sm:text-sm font-bold ${badge.earned ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                    {badge.name}
+                  </p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">{badge.description}</p>
+                  {!badge.earned && (
+                    <div className="mt-2">
+                      <div className="h-1.5 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-amber-400 transition-all duration-500"
+                          style={{ width: `${badge.target > 0 ? Math.min(100, (badge.progress / badge.target) * 100) : 0}%` }}
+                        />
+                      </div>
+                      <p className="text-[9px] text-slate-400 mt-1 font-medium">
+                        {badge.progress >= 1000 ? `${(badge.progress / 1000).toFixed(1)}k` : badge.progress}/{badge.target >= 1000 ? `${badge.target / 1000}k` : badge.target}
+                      </p>
+                    </div>
+                  )}
+                  {badge.earned && (
+                    <span className="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      Kazanıldı
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

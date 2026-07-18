@@ -202,3 +202,14 @@ class GoalOut(BaseModel):
     subject: Optional[SubjectBrief] = None
     class Config:
         from_attributes = True
+
+
+# ============================================
+# Konu Tamamlama Takibi
+# ============================================
+class TopicProgressToggle(BaseModel):
+    student_id: int = Field(alias="studentId")
+    topic_id: int = Field(alias="topicId")
+    completed: bool
+    class Config:
+        populate_by_name = True

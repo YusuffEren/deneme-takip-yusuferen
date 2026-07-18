@@ -6,6 +6,7 @@ import ExamDetail from './pages/ExamDetail';
 import DailyEntry from './pages/DailyEntry';
 import WeeklyReport from './pages/WeeklyReport';
 import GoalsPage from './pages/GoalsPage';
+import TopicsPage from './pages/TopicsPage';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
       <Route path="/daily/:studentId" element={<DailyEntry />} />
       <Route path="/report/:studentId" element={<WeeklyReport />} />
       <Route path="/goals/:studentId" element={<GoalsPage />} />
+      <Route path="/topics/:studentId" element={<TopicsPage />} />
     </Routes>
   );
 }

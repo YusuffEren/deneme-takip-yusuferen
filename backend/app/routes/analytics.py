@@ -17,7 +17,7 @@ from collections import defaultdict
 from app.database import get_db
 from app.models import (
     Exam, ExamResult, QuestionAnalysis, Subject, Topic,
-    DailyQuestion, StudySession, Goal
+    DailyQuestion, StudySession, Goal, TopicProgress
 )
 
 router = APIRouter(prefix="/api/analytics", tags=["Analiz & Raporlama"])
@@ -582,3 +582,153 @@ def get_correlation(
         })
 
     return {"data": result}
+
+
+# ============================================
+# Yardımcı: aktif günler (soru veya çalışma girilmiş günler)
+# ============================================
+def _get_active_dates(db: Session, student_id: int) -> set:
+    dq_dates = {d[0] for d in db.query(DailyQuestion.date).filter(DailyQuestion.student_id == student_id).distinct()}
+    ss_dates = {d[0] for d in db.query(StudySession.date).filter(StudySession.student_id == student_id).distinct()}
+    return dq_dates | ss_dates
+
+
+def _compute_streak(db: Session, student_id: int):
+    """Mevcut ve en uzun üst üste çalışma serisi (gün)"""
+    active = _get_active_dates(db, student_id)
+    if not active:
+        return 0, 0, None
+
+    today = date.today()
+    sorted_desc = sorted(active, reverse=True)
+
+    # Mevcut seri: bugün veya dün aktif değilse seri kırılmıştır
+    current = 0
+    if sorted_desc[0] >= today - timedelta(days=1):
+        cursor = sorted_desc[0]
+        while cursor in active:
+            current += 1
+            cursor -= timedelta(days=1)
+
+    # En uzun seri
+    longest = 1
+    run = 1
+    sorted_asc = sorted(active)
+    for i in range(1, len(sorted_asc)):
+        if (sorted_asc[i] - sorted_asc[i - 1]).days == 1:
+            run += 1
+            longest = max(longest, run)
+        else:
+            run = 1
+
+    return current, longest, sorted_desc[0]
+
+
+# ============================================
+# Streak - Üst üste çalışma serisi
+# ============================================
+@router.get("/streak")
+def get_streak(
+    studentId: int = Query(...),
+    db: Session = Depends(get_db)
+):
+    """Üst üste çalışılan gün sayısı"""
+    current, longest, last_active = _compute_streak(db, studentId)
+    return {
+        "currentStreak": current,
+        "longestStreak": longest,
+        "lastActiveDate": last_active.isoformat() if last_active else None,
+    }
+
+
+# ============================================
+# Eksik Gün Uyarısı
+# ============================================
+@router.get("/missing-days")
+def get_missing_days(
+    studentId: int = Query(...),
+    days: int = Query(7),
+    db: Session = Depends(get_db)
+):
+    """Son N günde (bugün hariç) hiç veri girilmeyen günler"""
+    today = date.today()
+    start = today - timedelta(days=days)
+
+    active = _get_active_dates(db, studentId)
+
+    gun_isimleri = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+    missing = []
+    for i in range(days):
+        d = start + timedelta(days=i)
+        if d not in active:
+            missing.append({"date": d.isoformat(), "dayName": gun_isimleri[d.weekday()]})
+
+    return {
+        "checkedDays": days,
+        "missingCount": len(missing),
+        "activeDays": days - len(missing),
+        "missingDays": missing,
+    }
+
+
+# ============================================
+# Rozet Sistemi
+# ============================================
+@router.get("/badges")
+def get_badges(
+    studentId: int = Query(...),
+    db: Session = Depends(get_db)
+):
+    """Verilere göre kazanılan/kazanılmakta olan rozetler"""
+    total_solved = (
+        db.query(func.coalesce(func.sum(DailyQuestion.solved_count), 0))
+        .filter(DailyQuestion.student_id == studentId)
+        .scalar()
+    )
+    total_minutes = (
+        db.query(func.coalesce(func.sum(StudySession.duration_minutes), 0))
+        .filter(StudySession.student_id == studentId)
+        .scalar()
+    )
+    exam_count = (
+        db.query(func.count(Exam.id))
+        .filter(Exam.student_id == studentId)
+        .scalar()
+    )
+    completed_topics = (
+        db.query(func.count(TopicProgress.id))
+        .filter(TopicProgress.student_id == studentId)
+        .scalar()
+    )
+    _, longest_streak, _ = _compute_streak(db, studentId)
+
+    definitions = [
+        ("first_exam", "📝", "İlk Adım", "İlk denemeni gir", 1, exam_count),
+        ("exam_10", "🎓", "Deneme Ustası", "10 deneme tamamla", 10, exam_count),
+        ("solved_1000", "📚", "Soru Canavarı", "Toplam 1000 soru çöz", 1000, total_solved),
+        ("solved_5000", "🏆", "Soru Efsanesi", "Toplam 5000 soru çöz", 5000, total_solved),
+        ("study_25h", "⏰", "Maratoncu", "25 saat çalış", 25 * 60, total_minutes),
+        ("study_100h", "🚀", "Zaman Lordu", "100 saat çalış", 100 * 60, total_minutes),
+        ("streak_7", "🔥", "Alev Aldın", "7 gün üst üste çalış", 7, longest_streak),
+        ("streak_30", "💎", "Elmas İrade", "30 gün üst üste çalış", 30, longest_streak),
+        ("topics_25", "✅", "Konu Avcısı", "25 konuyu bitir", 25, completed_topics),
+        ("topics_100", "🗺️", "Müfredat Fatihi", "100 konuyu bitir", 100, completed_topics),
+    ]
+
+    badges = []
+    for badge_id, icon, name, description, target, progress in definitions:
+        badges.append({
+            "id": badge_id,
+            "icon": icon,
+            "name": name,
+            "description": description,
+            "target": target,
+            "progress": min(progress, target),
+            "earned": progress >= target,
+        })
+
+    return {
+        "earnedCount": sum(1 for b in badges if b["earned"]),
+        "totalCount": len(badges),
+        "badges": badges,
+    }

@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import CORS_ORIGINS
 from app.database import engine, Base, SessionLocal
-from app.routes import students, curriculum, exams, daily_questions, study_sessions, goals, analytics
+from app.routes import students, curriculum, exams, daily_questions, study_sessions, goals, analytics, topic_progress
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("deneme-takip")
@@ -84,6 +84,7 @@ app.include_router(daily_questions.router)
 app.include_router(study_sessions.router)
 app.include_router(goals.router)
 app.include_router(analytics.router)
+app.include_router(topic_progress.router)
 
 
 @app.get("/")

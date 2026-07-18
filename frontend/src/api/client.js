@@ -104,4 +104,20 @@ export const getWeeklyReport = (studentId, weekOffset = 0) =>
 export const getCorrelation = (studentId, category) =>
   api.get(`/analytics/correlation?studentId=${studentId}${category ? `&examCategory=${category}` : ''}`);
 
+export const getStreak = (studentId) =>
+  api.get(`/analytics/streak?studentId=${studentId}`);
+
+export const getMissingDays = (studentId, days = 7) =>
+  api.get(`/analytics/missing-days?studentId=${studentId}&days=${days}`);
+
+export const getBadges = (studentId) =>
+  api.get(`/analytics/badges?studentId=${studentId}`);
+
+// ============================================
+// Konu Tamamlama Takibi
+// ============================================
+export const getTopicProgress = (studentId) =>
+  api.get(`/topic-progress?studentId=${studentId}`);
+export const toggleTopicProgress = (data) => api.post('/topic-progress', data);
+
 export default api;
