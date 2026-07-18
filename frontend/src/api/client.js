@@ -8,7 +8,7 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV
     ? '/api'
-    : 'https://deneme-takip-yusuferen.vercel.app/api');
+    : 'https://deneme-takip-yusuferen-v139.vercel.app/api');
 
 // Axios instance
 // Not: Backend Vercel serverless — uyumaz, istekler anında cevaplanır.

@@ -40,16 +40,18 @@ Kodda `git push` yaptıkça Vercel ve Render otomatik günceller.
    | `CORS_ORIGINS` | `https://deneme-takip-yusuferen-1.onrender.com` |
 
 5. **Deploy** → 1-2 dk bekle
-6. Test: tarayıcıdan `https://deneme-takip-yusuferen.vercel.app/api/health` aç → `{"status":"ok"}` görmelisin
+6. Test: tarayıcıdan `https://deneme-takip-yusuferen-v139.vercel.app/api/health` aç → `{"status":"ok"}` görmelisin
    (İlk açılışta veritabanı tabloları ve örnek öğrenciler otomatik oluşur.)
 
 ## Adım 3 — Siteyi aç ✅
 
 `https://deneme-takip-yusuferen-1.onrender.com` → artık anında açılmalı.
 
-> Adım 2'de proje adını değiştirdiysen site backend'i bulamaz. Çözüm:
+> **ÖNEMLİ:** Render'daki frontend'in backend adresini bilmesi gerekiyor.
 > Render Dashboard → `deneme-takip-yusuferen-1` (static site) → **Environment** →
-> `VITE_API_URL` = `https://SENIN-VERCEL-ADRESIN.vercel.app/api` ekle → kaydet (yeniden derlenir).
+> `VITE_API_URL` = `https://deneme-takip-yusuferen-v139.vercel.app/api` olmalı.
+> (Eski `...onrender.com/api` değeri duruyorsa DEĞİŞTİR, yoksa site eski bozuk
+> backend'e gitmeye devam eder.) Kaydedince Render yeniden derler (~2 dk).
 
 ## Adım 4 — Temizlik (opsiyonel)
 
