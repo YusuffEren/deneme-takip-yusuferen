@@ -104,23 +104,23 @@ export default function Layout({ children, studentId: propStudentId }) {
         {/* Mobile menu overlay */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/60 z-40 md:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Sidebar */}
-        <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-white/5 flex flex-col z-50 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-r border-slate-200 dark:border-white/5 flex flex-col z-50 transition-transform duration-300 shadow-xl shadow-slate-200/50 dark:shadow-none ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
 
           {/* Logo */}
           <div className="p-6 border-b border-slate-200 dark:border-white/5">
             <button onClick={() => navigate('/')} className="flex items-center gap-3 group w-full text-left">
-              <span className="text-2xl">📊</span>
+              <span className="text-2xl group-hover:scale-110 transition-transform duration-300">📊</span>
               <div>
                 <span className="text-lg font-bold gradient-text group-hover:opacity-80 transition-opacity block leading-tight">
                   Öğrenci Takip
                 </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Verimlilik Portalı</span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-wider uppercase">Verimlilik Portalı</span>
               </div>
             </button>
           </div>
@@ -147,11 +147,16 @@ export default function Layout({ children, studentId: propStudentId }) {
                 end
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`
+                  `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative ${isActive ? 'bg-gradient-to-r from-indigo-100 to-indigo-50 dark:from-indigo-500/20 dark:to-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`
                 }
               >
-                {item.icon}
-                {item.label}
+                {({ isActive }) => (
+                  <>
+                    {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-indigo-500" />}
+                    {React.cloneElement(item.icon, { className: 'w-5 h-5 transition-transform duration-200 group-hover:scale-110' })}
+                    <span>{item.label}</span>
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>

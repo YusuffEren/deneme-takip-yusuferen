@@ -43,20 +43,26 @@ def get_summary(
         return {
             "totalExams": 0,
             "lastNet": None,
+            "lastExamName": None,
+            "lastExamDate": None,
             "bestNet": None,
+            "worstNet": None,
             "avgNet": None,
             "trend": None,
         }
 
     total_nets = [e.total_net for e in exams]
-    last_net = total_nets[0] if total_nets else 0
+    last_exam = exams[0]
     trend = (total_nets[0] - total_nets[1]) if len(total_nets) >= 2 else None
 
     return {
         "totalExams": len(exams),
-        "lastNet": last_net,
+        "lastNet": total_nets[0],
+        "lastExamName": last_exam.exam_name,
+        "lastExamDate": last_exam.exam_date.isoformat(),
         "bestNet": max(total_nets) if total_nets else None,
-        "avgNet": sum(total_nets) / len(total_nets) if total_nets else None,
+        "worstNet": min(total_nets) if total_nets else None,
+        "avgNet": round(sum(total_nets) / len(total_nets), 2) if total_nets else None,
         "trend": trend,
     }
 
@@ -87,8 +93,8 @@ def get_monthly_trend(
     for month, nets in sorted(monthly.items()):
         avg_net = sum(nets) / len(nets)
         best_net = max(nets)
-        change = (avg_net - prev_avg) if prev_avg is not None else 0
-        change_percent = ((change / prev_avg) * 100) if prev_avg and prev_avg != 0 else None
+        change = (avg_net - prev_avg) if prev_avg is not None else None
+        change_percent = ((change / prev_avg) * 100) if change is not None and prev_avg and prev_avg != 0 else None
 
         result.append({
             "month": month,

@@ -40,6 +40,7 @@ export default function ExamDetail() {
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [studentId, setStudentId] = useState(null);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -58,7 +59,10 @@ export default function ExamDetail() {
 
   useEffect(() => {
     getExam(examId)
-      .then(res => setExam(res.data))
+      .then(res => {
+        setExam(res.data);
+        setStudentId(res.data.studentId);
+      })
       .catch(err => {
         console.error('Deneme yükleme hatası:', err);
         setError('Deneme verileri bulunamadı veya yüklenemedi.');
@@ -68,7 +72,7 @@ export default function ExamDetail() {
 
   if (loading) {
     return (
-      <Layout>
+      <Layout studentId={studentId}>
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
@@ -81,7 +85,7 @@ export default function ExamDetail() {
 
   if (error || !exam) {
     return (
-      <Layout>
+      <Layout studentId={studentId}>
         <div className="flex flex-col items-center justify-center h-96">
           <span className="text-6xl mb-4">⚠️</span>
           <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Hata Oluştu</h2>
@@ -324,44 +328,52 @@ export default function ExamDetail() {
         </div>
       </div>
 
-      {exam.topicAnalyses?.length > 0 && (
-        <div className="glass-card overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02]">
-            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <span className="text-lg sm:text-xl">🔍</span> Konu Bazlı Hata Analizi
-            </h2>
-            <p className="text-[10px] sm:text-xs text-slate-500 mt-1">Hangi konularda eksik olduğunu buradan görebilirsin.</p>
-          </div>
-          
-          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-            {exam.topicAnalyses.map(a => (
-              <div key={a.id} className={`p-4 rounded-xl border transition-all hover:scale-[1.02] ${a.wrongCount > 0 ? 'bg-rose-50 dark:bg-rose-500/5 border-rose-200 dark:border-rose-500/20' : 'bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20'}`}>
-                <div className="flex justify-between items-start mb-3 gap-2">
-                  <h3 className="font-bold text-slate-800 dark:text-white text-sm line-clamp-2 leading-tight">{a.topic.name}</h3>
-                  <span className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-bold ${a.wrongCount > 0 ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400' : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'}`}>
-                    {a.topic.subject.name.substring(0, 3).toUpperCase()}
-                  </span>
+      {(() => {
+        const allAnalyses = exam.results?.flatMap(r => 
+          (r.analyses || []).map(a => ({
+            ...a,
+            subjectName: r.subject?.name,
+          }))
+        ) || [];
+        return allAnalyses.length > 0 ? (
+          <div className="glass-card overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02]">
+              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <span className="text-lg sm:text-xl">🔍</span> Konu Bazlı Hata Analizi
+              </h2>
+              <p className="text-[10px] sm:text-xs text-slate-500 mt-1">Hangi konularda eksik olduğunu buradan görebilirsin.</p>
+            </div>
+            
+            <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+              {allAnalyses.map(a => (
+                <div key={a.id} className={`p-4 rounded-xl border transition-all hover:scale-[1.02] ${a.wrongCount > 0 ? 'bg-rose-50 dark:bg-rose-500/5 border-rose-200 dark:border-rose-500/20' : 'bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20'}`}>
+                  <div className="flex justify-between items-start mb-3 gap-2">
+                    <h3 className="font-bold text-slate-800 dark:text-white text-sm line-clamp-2 leading-tight">{a.topic?.name || 'Bilinmeyen Konu'}</h3>
+                    <span className={`flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-bold ${a.wrongCount > 0 ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400' : 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'}`}>
+                      {(a.subjectName || '').substring(0, 3).toUpperCase()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    {a.wrongCount > 0 && (
+                      <div className="flex-1 bg-white/50 dark:bg-white/5 rounded-lg p-2 text-center border border-slate-200 dark:border-white/5">
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">YANLIŞ</p>
+                        <p className="font-black text-rose-600 dark:text-rose-400 text-lg">{a.wrongCount}</p>
+                      </div>
+                    )}
+                    {a.blankCount > 0 && (
+                      <div className="flex-1 bg-white/50 dark:bg-white/5 rounded-lg p-2 text-center border border-slate-200 dark:border-white/5">
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">BOŞ</p>
+                        <p className="font-black text-amber-600 dark:text-amber-400 text-lg">{a.blankCount}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                
-                <div className="flex gap-3">
-                  {a.wrongCount > 0 && (
-                    <div className="flex-1 bg-white/50 dark:bg-white/5 rounded-lg p-2 text-center border border-slate-200 dark:border-white/5">
-                      <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">YANLIŞ</p>
-                      <p className="font-black text-rose-600 dark:text-rose-400 text-lg">{a.wrongCount}</p>
-                    </div>
-                  )}
-                  {a.blankCount > 0 && (
-                    <div className="flex-1 bg-white/50 dark:bg-white/5 rounded-lg p-2 text-center border border-slate-200 dark:border-white/5">
-                      <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">BOŞ</p>
-                      <p className="font-black text-amber-600 dark:text-amber-400 text-lg">{a.blankCount}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        ) : null;
+      })()}
 
     </Layout>
   );

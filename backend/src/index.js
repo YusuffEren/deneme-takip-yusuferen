@@ -10,6 +10,9 @@ import studentsRouter from './routes/students.js';
 import curriculumRouter from './routes/curriculum.js';
 import examsRouter from './routes/exams.js';
 import analyticsRouter from './routes/analytics.js';
+import dailyQuestionsRouter from './routes/daily_questions.js';
+import studySessionsRouter from './routes/study_sessions.js';
+import goalsRouter from './routes/goals.js';
 
 dotenv.config();
 
@@ -27,6 +30,9 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/api/students', studentsRouter);
 app.use('/api/curriculum', curriculumRouter);
 app.use('/api/exams', examsRouter);
+app.use('/api/daily-questions', dailyQuestionsRouter);
+app.use('/api/study-sessions', studySessionsRouter);
+app.use('/api/goals', goalsRouter);
 app.use('/api/analytics', analyticsRouter);
 
 // Health check endpoint

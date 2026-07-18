@@ -15,12 +15,15 @@ datasource db {
 // Öğrenci tablosu - LGS ve TYT/AYT profilleri
 // ============================================
 model Student {
-  id        Int      @id @default(autoincrement())
-  name      String                              // Öğrenci adı
-  examType  String   @map("exam_type")          // LGS | TYT | AYT
-  avatar    String   @default("📚")             // Profil ikonu
-  createdAt DateTime @default(now()) @map("created_at")
-  exams     Exam[]
+  id             Int             @id @default(autoincrement())
+  name           String                              // Öğrenci adı
+  examType       String          @map("exam_type")   // LGS | TYT | AYT
+  avatar         String          @default("📚")      // Profil ikonu
+  createdAt      DateTime        @default(now()) @map("created_at")
+  exams          Exam[]
+  dailyQuestions DailyQuestion[]
+  studySessions  StudySession[]
+  goals          Goal[]
 
   @@map("students")
 }
@@ -29,14 +32,17 @@ model Student {
 // Ders tablosu - Her sınav türünün dersleri
 // ============================================
 model Subject {
-  id             Int          @id @default(autoincrement())
-  name           String                           // Ders adı (Türkçe, Matematik vb.)
-  examType       String       @map("exam_type")   // LGS | TYT | AYT
-  totalQuestions  Int          @map("total_questions") // Sınavdaki soru sayısı
-  coefficient    Float        @default(1.0)       // Katsayı (LGS için farklılık var)
-  displayOrder   Int          @default(0) @map("display_order") // Gösterim sırası
+  id             Int             @id @default(autoincrement())
+  name           String                              // Ders adı (Türkçe, Matematik vb.)
+  examType       String          @map("exam_type")   // LGS | TYT | AYT
+  totalQuestions Int             @map("total_questions") // Sınavdaki soru sayısı
+  coefficient    Float           @default(1.0)       // Katsayı (LGS için farklılık var)
+  displayOrder   Int             @default(0) @map("display_order") // Gösterim sırası
   topics         Topic[]
   examResults    ExamResult[]
+  dailyQuestions DailyQuestion[]
+  studySessions  StudySession[]
+  goals          Goal[]
 
   @@map("subjects")
 }
@@ -103,4 +109,60 @@ model QuestionAnalysis {
   topic        Topic      @relation(fields: [topicId], references: [id])
 
   @@map("question_analysis")
+}
+
+// ============================================
+// Günlük soru çözüm takibi
+// ============================================
+model DailyQuestion {
+  id           Int      @id @default(autoincrement())
+  studentId    Int      @map("student_id")
+  subjectId    Int      @map("subject_id")
+  topicName    String?  @map("topic_name")
+  date         DateTime @map("date")
+  solvedCount  Int      @default(0) @map("solved_count")
+  correctCount Int      @default(0) @map("correct_count")
+  wrongCount   Int      @default(0) @map("wrong_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject      Subject  @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, subjectId, topicName, date])
+  @@map("daily_questions")
+}
+
+// ============================================
+// Çalışma süresi takibi
+// ============================================
+model StudySession {
+  id              Int      @id @default(autoincrement())
+  studentId       Int      @map("student_id")
+  subjectId       Int      @map("subject_id")
+  date            DateTime @map("date")
+  durationMinutes Int      @map("duration_minutes")
+  notes           String?  @map("notes")
+  createdAt       DateTime @default(now()) @map("created_at")
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject         Subject  @relation(fields: [subjectId], references: [id])
+
+  @@map("study_sessions")
+}
+
+// ============================================
+// Hedef yönetimi
+// ============================================
+model Goal {
+  id          Int      @id @default(autoincrement())
+  studentId   Int      @map("student_id")
+  goalType    String   @map("goal_type")     // "daily" | "weekly"
+  metricType  String   @map("metric_type")   // "questions" | "duration"
+  targetValue Int      @map("target_value")
+  subjectId   Int?     @map("subject_id")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject     Subject? @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, goalType, metricType, subjectId])
+  @@map("goals")
 }

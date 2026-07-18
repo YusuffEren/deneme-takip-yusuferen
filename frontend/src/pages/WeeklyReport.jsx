@@ -11,6 +11,7 @@ import {
   ComposedChart, Legend
 } from 'recharts';
 import Layout from '../components/Layout';
+import { SkeletonCard, SkeletonChart, SkeletonList } from '../components/Skeleton';
 import { getWeeklyReport, getCorrelation, getRedAlerts, getStudent } from '../api/client';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#f97316'];
@@ -72,11 +73,20 @@ export default function WeeklyReport() {
   if (loading) {
     return (
       <Layout studentId={studentId}>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-slate-600 dark:text-slate-400">Rapor hazırlanıyor...</p>
-          </div>
+        <div className="mb-6 sm:mb-8">
+          <div className="h-8 w-56 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-2" />
+          <div className="h-4 w-40 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+          <SkeletonChart />
+          <SkeletonList rows={4} />
         </div>
       </Layout>
     );
@@ -100,23 +110,38 @@ export default function WeeklyReport() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setWeekOffset(prev => prev - 1)}
-              className="btn-secondary px-3 py-2 text-sm"
+              className="btn-secondary px-3 py-2 text-sm flex items-center gap-1"
+              title="Önceki hafta"
             >
-              ← Önceki
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="hidden sm:inline">Önceki</span>
             </button>
             <button
               onClick={() => setWeekOffset(0)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${weekOffset === 0 ? 'bg-indigo-500 text-white' : 'btn-secondary'}`}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1 ${weekOffset === 0 ? 'bg-indigo-500 text-white shadow-md' : 'btn-secondary'}`}
             >
-              Bu Hafta
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="hidden sm:inline">Bu Hafta</span>
+              <span className="sm:hidden">Şimdi</span>
             </button>
             <button
               onClick={() => setWeekOffset(prev => prev + 1)}
               disabled={weekOffset >= 0}
-              className="btn-secondary px-3 py-2 text-sm disabled:opacity-30"
+              className="btn-secondary px-3 py-2 text-sm flex items-center gap-1 disabled:opacity-30"
+              title="Sonraki hafta"
             >
-              Sonraki →
+              <span className="hidden sm:inline">Sonraki</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-2 hidden sm:inline">
+              {weekOffset === 0 ? 'Bu hafta' : weekOffset < 0 ? `${Math.abs(weekOffset)} hafta önce` : `${weekOffset} hafta sonra`}
+            </span>
           </div>
         </div>
       </div>
@@ -198,7 +223,7 @@ export default function WeeklyReport() {
           <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">📈 Günlük Aktivite</h2>
           <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4 sm:mb-6">Günlere göre soru ve çalışma süresi</p>
 
-          {report?.dailyBreakdown?.length > 0 ? (
+          {report?.dailyBreakdown?.some(d => d.solved > 0 || d.minutes > 0) ? (
             <ResponsiveContainer width="100%" height={280}>
               <ComposedChart data={report.dailyBreakdown} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                 <defs>
@@ -269,7 +294,7 @@ export default function WeeklyReport() {
           <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">🔗 Çalışma-Net Korelasyonu</h2>
           <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4 sm:mb-6">Deneme öncesi çalışma ile net arasındaki ilişki</p>
 
-          {correlation?.data?.length > 1 ? (
+          {correlation?.data?.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <ComposedChart data={correlation.data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                 <defs>

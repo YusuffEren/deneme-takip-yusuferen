@@ -12,6 +12,7 @@ import {
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import Layout from '../components/Layout';
+import { SkeletonCard, SkeletonChart, SkeletonList } from '../components/Skeleton';
 import {
   getStudent, getSummary, getMonthlyTrend, getSubjectProgress,
   getWeakTopics, getExams, getWeeklyReport
@@ -100,11 +101,20 @@ export default function Dashboard() {
   if (loading) {
     return (
       <Layout studentId={studentId}>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-slate-600 dark:text-slate-400">Dashboard yükleniyor...</p>
-          </div>
+        <div className="mb-6 sm:mb-8">
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-2" />
+          <div className="h-4 w-64 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+          <SkeletonList rows={5} />
+          <SkeletonList rows={5} />
         </div>
       </Layout>
     );
@@ -146,50 +156,86 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* İSTATİSTİK KARTLARI - Deneme + Bu Hafta */}
+      {/* İSTATİSTİK KARTLARI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <div className="stat-card">
+        <div className="stat-card bg-gradient-to-br from-white to-indigo-50/30 dark:from-white/[0.04] dark:to-indigo-500/[0.03]">
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-1">Toplam Deneme</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-1 font-medium tracking-wide">Toplam Deneme</p>
             <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{summary?.totalExams || 0}</p>
+            {summary?.avgNet ? (
+              <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block" />
+                Ø {summary.avgNet.toFixed(1)} net
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 mt-1">Henüz deneme yok</p>
+            )}
           </div>
-          <div className="absolute -bottom-2 -right-2 text-4xl sm:text-5xl opacity-10">📝</div>
+          <div className="absolute -bottom-2 -right-2 text-5xl sm:text-6xl opacity-[0.06] select-none">📝</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card bg-gradient-to-br from-white to-emerald-50/30 dark:from-white/[0.04] dark:to-emerald-500/[0.03]">
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-1">Son Net</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-1 font-medium tracking-wide">Son Net</p>
             <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{summary?.lastNet?.toFixed(1) || '—'}</p>
-            {summary?.trend !== null && summary?.trend !== undefined && (
-              <p className={`text-xs sm:text-sm mt-1 font-semibold ${summary.trend >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                {summary.trend >= 0 ? '↑' : '↓'} {Math.abs(summary.trend).toFixed(1)}
+            {summary?.trend !== null && summary?.trend !== undefined ? (
+              <p className={`text-xs sm:text-sm mt-1 font-semibold flex items-center gap-1 ${summary.trend >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full ${summary.trend >= 0 ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-rose-100 dark:bg-rose-500/20'}`}>
+                  {summary.trend >= 0 ? '↑' : '↓'}
+                </span>
+                <span>{Math.abs(summary.trend).toFixed(1)}</span>
+                <span className="font-normal text-slate-400">önceki denemeye göre</span>
+              </p>
+            ) : summary?.totalExams > 0 ? (
+              <p className="text-xs text-slate-400 mt-1">İlk deneme - kıyas yok</p>
+            ) : (
+              <p className="text-xs text-slate-400 mt-1">Henüz deneme yok</p>
+            )}
+          </div>
+          <div className="absolute -bottom-2 -right-2 text-5xl sm:text-6xl opacity-[0.06] select-none">🎯</div>
+        </div>
+        <div className="stat-card bg-gradient-to-br from-white to-amber-50/30 dark:from-white/[0.04] dark:to-amber-500/[0.03]">
+          <div className="relative z-10">
+            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-1 font-medium tracking-wide">En İyi Net</p>
+            <p className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">{summary?.bestNet?.toFixed(1) || '—'}</p>
+            {summary?.worstNet !== null && summary?.worstNet !== undefined && (
+              <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                En düşük: {summary.worstNet.toFixed(1)}
               </p>
             )}
           </div>
-          <div className="absolute -bottom-2 -right-2 text-4xl sm:text-5xl opacity-10">📈</div>
+          <div className="absolute -bottom-2 -right-2 text-5xl sm:text-6xl opacity-[0.06] select-none">🏆</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card bg-gradient-to-br from-white to-purple-50/30 dark:from-white/[0.04] dark:to-purple-500/[0.03]">
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-1">Bu Hafta Soru</p>
-            <p className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400">{ws.totalSolved || 0}</p>
-            <p className="text-xs text-slate-500 mt-1">%{ws.successRate || 0} başarı</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-1 font-medium tracking-wide">Bu Hafta</p>
+            <p className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400">{ws.totalSolved || 0}</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {ws.totalSolved > 0 ? (
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                  %{ws.successRate || 0} başarı
+                </span>
+              ) : (
+                'Soru girilmemiş'
+              )}
+            </p>
           </div>
-          <div className="absolute -bottom-2 -right-2 text-4xl sm:text-5xl opacity-10">📚</div>
-        </div>
-        <div className="stat-card">
-          <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-1">Bu Hafta Çalışma</p>
-            <p className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400">{ws.totalStudyHours || 0}s</p>
-            <p className="text-xs text-slate-500 mt-1">{ws.activeDays || 0}/7 gün</p>
-          </div>
-          <div className="absolute -bottom-2 -right-2 text-4xl sm:text-5xl opacity-10">⏱️</div>
+          <div className="absolute -bottom-2 -right-2 text-5xl sm:text-6xl opacity-[0.06] select-none">📊</div>
         </div>
       </div>
 
       {/* GRAFİKLER */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <div className="glass-card p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">📈 Aylık Net Trendi</h2>
-          <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4 sm:mb-6">Aylara göre ortalama net değişimi</p>
+        <div className="glass-card overflow-hidden">
+          <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 bg-gradient-to-r from-indigo-500/5 to-transparent dark:from-indigo-500/[0.03]">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">📈</span>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Aylık Net Trendi</h2>
+            </div>
+            <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4">Aylara göre ortalama net değişimi</p>
+          </div>
+          <div className="p-4 sm:p-6 pt-0">
           {trend.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <AreaChart data={trend} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
@@ -211,10 +257,14 @@ export default function Dashboard() {
           ) : (
             <div className="flex items-center justify-center h-64 text-slate-500"><p>Henüz yeterli veri yok</p></div>
           )}
+          </div>
         </div>
 
         <div className="glass-card p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">📚 Ders Performansı</h2>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-lg">📚</span>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Ders Performansı</h2>
+          </div>
           <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4 sm:mb-6">Son deneme vs. Ortalama net</p>
           {subjectProgress.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
@@ -239,13 +289,19 @@ export default function Dashboard() {
 
       {/* ALT BÖLÜM - Zayıf Konular + Son Denemeler */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-        <div className="glass-card p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">🚨 Zayıf Konu Tespiti</h2>
-          <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4">Son 5 denemede hata oranı yüksek konular</p>
+        <div className="glass-card overflow-hidden">
+          <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 bg-gradient-to-r from-rose-500/5 to-transparent dark:from-rose-500/[0.03]">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">🚨</span>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Zayıf Konu Tespiti</h2>
+            </div>
+            <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4">Son 5 denemede hata oranı yüksek konular</p>
+          </div>
+          <div className="p-4 sm:p-6 pt-0">
           {weakTopics.length > 0 ? (
             <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
               {weakTopics.map((topic, i) => (
-                <div key={i} className={`p-4 rounded-xl border transition-all hover:scale-[1.01] ${topic.status === 'CRITICAL' ? 'bg-rose-50 dark:bg-rose-500/5 border-rose-200 dark:border-rose-500/20' : 'bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20'}`}>
+                <div key={i} className={`p-4 rounded-xl border transition-all hover:scale-[1.01] hover:shadow-md ${topic.status === 'CRITICAL' ? 'bg-rose-50/80 dark:bg-rose-500/[0.04] border-rose-200 dark:border-rose-500/20' : 'bg-amber-50/80 dark:bg-amber-500/[0.04] border-amber-200 dark:border-amber-500/20'}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-slate-800 dark:text-white text-sm truncate">{topic.topicName}</p>
@@ -256,49 +312,64 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <div className="flex items-center gap-4 mt-3 text-xs text-slate-700 dark:text-slate-400">
-                    <span>Hata: <strong>{topic.totalErrors}</strong></span>
-                    <span>Çalışma: <strong className={topic.studyHours > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
-                      {topic.studyHours > 0 ? `${topic.studyHours}s` : 'Yok'}
-                    </strong></span>
-                    {topic.needsMoreStudy && <span className="badge-critical text-[10px] px-2 py-0.5">Çalışma artır!</span>}
+                    <span className="flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                      Hata: <strong>{topic.totalErrors}</strong>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      Çalışma: <strong className={topic.studyHours > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
+                        {topic.studyHours > 0 ? `${topic.studyHours}s` : 'Yok'}
+                      </strong>
+                    </span>
+                    {topic.needsMoreStudy && <span className="badge-critical text-[10px] px-2 py-0.5 animate-wiggle">Çalışma artır!</span>}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-48 text-slate-500">
-              <span className="text-4xl mb-3">🎉</span>
-              <p className="font-medium">Tebrikler! Zayıf konu yok</p>
+              <span className="text-5xl mb-3 animate-float">🎉</span>
+              <p className="font-medium text-slate-700 dark:text-slate-300">Tebrikler! Zayıf konu yok</p>
+              <p className="text-xs mt-1">Tüm konularda başarılı görünüyorsun</p>
             </div>
           )}
+          </div>
         </div>
 
-        <div className="glass-card p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">📋 Son Denemeler</h2>
-          <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4">En son girilen deneme sonuçları</p>
+        <div className="glass-card overflow-hidden">
+          <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 bg-gradient-to-r from-emerald-500/5 to-transparent dark:from-emerald-500/[0.03]">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">📋</span>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Son Denemeler</h2>
+            </div>
+            <p className="text-slate-600 dark:text-slate-500 text-xs sm:text-sm mb-4">En son girilen deneme sonuçları</p>
+          </div>
+          <div className="p-4 sm:p-6 pt-0">
           {recentExams.length > 0 ? (
             <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
               {recentExams.map((exam) => (
                 <button key={exam.id} onClick={() => navigate(`/exam/${exam.id}`)}
                   className="w-full text-left p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5
-                    hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-all group">
+                    hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:border-indigo-200 dark:hover:border-indigo-500/20 transition-all group">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-slate-800 dark:text-white text-sm truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
                         {exam.examName}
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         {format(new Date(exam.examDate), 'd MMMM yyyy', { locale: tr })}
                       </p>
                     </div>
                     <div className="text-right ml-4">
-                      <p className="text-lg font-black text-slate-900 dark:text-white">{exam.totalNet.toFixed(1)}</p>
-                      <p className="text-xs text-slate-500">net</p>
+                      <p className="text-lg font-black gradient-text">{exam.totalNet.toFixed(1)}</p>
+                      <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Net</p>
                     </div>
                   </div>
                   <div className="flex gap-2 mt-3 flex-wrap">
                     {exam.results?.map((r) => (
-                      <span key={r.id} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-white/5 dark:text-slate-400">
+                      <span key={r.id} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-white/[0.04] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/5 font-medium">
                         {r.subject.name.substring(0, 3)}: {r.netScore.toFixed(1)}
                       </span>
                     ))}
@@ -308,11 +379,13 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-48 text-slate-500">
-              <span className="text-4xl mb-3">📝</span>
-              <p className="font-medium">Henüz deneme girilmemiş</p>
-              <button onClick={() => navigate(`/exam/new/${studentId}`)} className="btn-primary mt-3 text-sm">İlk denemeyi ekle</button>
+              <span className="text-5xl mb-3 animate-float" style={{ animationDelay: '1s' }}>📝</span>
+              <p className="font-medium text-slate-700 dark:text-slate-300">Henüz deneme girilmemiş</p>
+              <p className="text-xs mt-1 mb-4">İlk denemeni ekleyerek analizleri başlat</p>
+              <button onClick={() => navigate(`/exam/new/${studentId}`)} className="btn-primary text-sm">İlk Denemeyi Ekle</button>
             </div>
           )}
+          </div>
         </div>
       </div>
     </Layout>

@@ -7,7 +7,8 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Layout from '../components/Layout';
-import { getStudent, getGoals, createGoal, deleteGoal, getCurriculum } from '../api/client';
+import { SkeletonCard, SkeletonList } from '../components/Skeleton';
+import { getStudent, getGoals, createGoal, deleteGoal, getCurriculum, getWeeklyReport } from '../api/client';
 
 const GOAL_TYPES = [
   { value: 'daily', label: 'Günlük', icon: '📅', color: 'indigo' },
@@ -27,6 +28,7 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [weeklyProgress, setWeeklyProgress] = useState(null);
 
   // Yeni hedef formu
   const [newGoal, setNewGoal] = useState({
@@ -41,12 +43,13 @@ export default function GoalsPage() {
     Promise.all([
       getStudent(studentId),
       getGoals(studentId),
-    ]).then(async ([studentRes, goalsRes]) => {
+      getWeeklyReport(studentId, 0),
+    ]).then(async ([studentRes, goalsRes, weeklyRes]) => {
       const s = studentRes.data;
       setStudent(s);
       setGoals(goalsRes.data);
+      setWeeklyProgress(weeklyRes.data);
 
-      // Dersler
       let allSubjects = [];
       if (s.examType === 'TYT') {
         const [tytRes, aytRes] = await Promise.all([getCurriculum('TYT'), getCurriculum('AYT')]);
@@ -106,8 +109,13 @@ export default function GoalsPage() {
   if (loading) {
     return (
       <Layout studentId={studentId}>
-        <div className="flex items-center justify-center h-96">
-          <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+        <div className="mb-6 sm:mb-8">
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-2" />
+          <div className="h-4 w-64 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <SkeletonList rows={3} />
+          <SkeletonList rows={3} />
         </div>
       </Layout>
     );
@@ -137,6 +145,56 @@ export default function GoalsPage() {
         </div>
       </div>
 
+      {/* HAFTALIK İLERLEME ÖZETİ */}
+      {weeklyProgress?.goals && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          {weeklyProgress.goals.weeklyQuestions?.target && (
+            <div className="glass-card p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-xl">📚</span>
+                <div>
+                  <p className="text-xs text-slate-500">Haftalık Soru Hedefi</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    {weeklyProgress.goals.weeklyQuestions.actual || 0} / {weeklyProgress.goals.weeklyQuestions.target}
+                  </p>
+                </div>
+                <span className="ml-auto text-lg font-black gradient-text">
+                  %{weeklyProgress.goals.weeklyQuestions.percentage || 0}
+                </span>
+              </div>
+              <div className="h-2 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-700"
+                  style={{ width: `${Math.min(weeklyProgress.goals.weeklyQuestions.percentage || 0, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+          {weeklyProgress.goals.weeklyDuration?.target && (
+            <div className="glass-card p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-xl">⏱️</span>
+                <div>
+                  <p className="text-xs text-slate-500">Haftalık Süre Hedefi</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                    {Math.floor((weeklyProgress.goals.weeklyDuration.actual || 0) / 60)}s / {Math.floor(weeklyProgress.goals.weeklyDuration.target / 60)}s
+                  </p>
+                </div>
+                <span className="ml-auto text-lg font-black gradient-text">
+                  %{weeklyProgress.goals.weeklyDuration.percentage || 0}
+                </span>
+              </div>
+              <div className="h-2 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-700"
+                  style={{ width: `${Math.min(weeklyProgress.goals.weeklyDuration.percentage || 0, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* YENİ HEDEF FORMU */}
       {showForm && (
         <div className="glass-card p-6 mb-6 animate-slide-up">
@@ -147,19 +205,21 @@ export default function GoalsPage() {
             <div>
               <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">Periyot</label>
               <div className="flex gap-2">
-                {GOAL_TYPES.map(type => (
-                  <button
-                    key={type.value}
-                    onClick={() => setNewGoal(prev => ({ ...prev, goalType: type.value }))}
-                    className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
-                      newGoal.goalType === type.value
-                        ? `bg-${type.color}-100 dark:bg-${type.color}-500/20 text-${type.color}-600 dark:text-${type.color}-300 border-${type.color}-200 dark:border-${type.color}-500/30`
-                        : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
-                    }`}
-                  >
-                    {type.icon} {type.label}
-                  </button>
-                ))}
+                  {GOAL_TYPES.map(type => (
+                    <button
+                      key={type.value}
+                      onClick={() => setNewGoal(prev => ({ ...prev, goalType: type.value }))}
+                      className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
+                        newGoal.goalType === type.value
+                          ? (type.color === 'indigo'
+                              ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/30'
+                              : 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-500/30')
+                          : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10'
+                      }`}
+                    >
+                      {type.icon} {type.label}
+                    </button>
+                  ))}
               </div>
             </div>
 
