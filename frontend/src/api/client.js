@@ -95,6 +95,9 @@ export const getSubjectProgress = (studentId, category) =>
 export const getWeakTopics = (studentId, category) =>
   api.get(`/analytics/weak-topics?studentId=${studentId}${category ? `&examCategory=${category}` : ''}`);
 
+export const getWrongTopicHistory = (studentId, category) =>
+  api.get(`/analytics/wrong-topic-history?studentId=${studentId}${category ? `&examCategory=${category}` : ''}`);
+
 export const getRedAlerts = (studentId, category) =>
   api.get(`/analytics/red-alerts?studentId=${studentId}${category ? `&examCategory=${category}` : ''}`);
 

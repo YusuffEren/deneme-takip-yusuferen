@@ -260,6 +260,83 @@ def get_weak_topics(
 
 
 # ============================================
+# Yanlış Konu Geçmişi
+# Tüm denemelerdeki konu bazlı hatalar — kronolojik geçmiş ile
+# ============================================
+@router.get("/wrong-topic-history")
+def get_wrong_topic_history(
+    studentId: int = Query(...),
+    examCategory: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Öğrencinin TÜM denemelerinde yanlış/boş yaptığı konular ve tarih sırasıyla geçmişi"""
+    exam_query = db.query(Exam).filter(Exam.student_id == studentId)
+    if examCategory:
+        exam_query = exam_query.filter(Exam.exam_category == examCategory)
+
+    exams = exam_query.order_by(Exam.exam_date.desc()).all()
+    exam_map = {e.id: e for e in exams}
+
+    if not exam_map:
+        return []
+
+    analyses = (
+        db.query(QuestionAnalysis)
+        .join(ExamResult)
+        .options(
+            joinedload(QuestionAnalysis.topic).joinedload(Topic.subject),
+            joinedload(QuestionAnalysis.exam_result),
+        )
+        .filter(ExamResult.exam_id.in_(exam_map.keys()))
+        .all()
+    )
+
+    # Konu bazında topla
+    topic_data = defaultdict(lambda: {
+        "totalWrong": 0, "totalBlank": 0, "history": []
+    })
+
+    for a in analyses:
+        exam = exam_map[a.exam_result.exam_id]
+        key = a.topic_id
+        topic_data[key]["totalWrong"] += a.wrong_count
+        topic_data[key]["totalBlank"] += a.blank_count
+        topic_data[key]["topic"] = a.topic
+        topic_data[key]["subject"] = a.topic.subject if a.topic else None
+        topic_data[key]["history"].append({
+            "examId": exam.id,
+            "examName": exam.exam_name,
+            "examDate": exam.exam_date.isoformat(),
+            "wrongCount": a.wrong_count,
+            "blankCount": a.blank_count,
+        })
+
+    result = []
+    for topic_id, data in topic_data.items():
+        topic = data.get("topic")
+        subject = data.get("subject")
+        history = sorted(data["history"], key=lambda h: h["examDate"], reverse=True)
+
+        result.append({
+            "topicId": topic_id,
+            "topicName": topic.name if topic else f"Konu {topic_id}",
+            "subjectName": subject.name if subject else "",
+            "subjectId": subject.id if subject else None,
+            "totalWrong": data["totalWrong"],
+            "totalBlank": data["totalBlank"],
+            "totalErrors": data["totalWrong"] + data["totalBlank"],
+            "examCount": len(history),
+            "firstDate": history[-1]["examDate"] if history else None,
+            "lastDate": history[0]["examDate"] if history else None,
+            "history": history,
+        })
+
+    # En çok hata yapılan konular üstte
+    result.sort(key=lambda x: -x["totalErrors"])
+    return result
+
+
+# ============================================
 # Kırmızı Alarm - Geliştirilmiş
 # Son 3 denemede sürekli kaçırılan konuların çalışma saatleriyle kıyaslanması
 # ============================================

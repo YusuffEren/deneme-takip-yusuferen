@@ -68,6 +68,16 @@ export default function Layout({ children, studentId: propStudentId }) {
       label: 'Konu Takibi',
     },
     {
+      to: `/wrong-topics/${studentId}`,
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            d="M12 9v2m0 4h.01M5 19h14a2 2 0 001.84-2.75L13.74 4.99a2 2 0 00-3.5 0L3.16 16.25A2 2 0 005 19z" />
+        </svg>
+      ),
+      label: 'Yanlış Konular',
+    },
+    {
       to: `/daily/${studentId}`,
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

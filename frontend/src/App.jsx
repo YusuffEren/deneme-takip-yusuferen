@@ -7,6 +7,7 @@ import DailyEntry from './pages/DailyEntry';
 import WeeklyReport from './pages/WeeklyReport';
 import GoalsPage from './pages/GoalsPage';
 import TopicsPage from './pages/TopicsPage';
+import WrongTopicsPage from './pages/WrongTopicsPage';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
       <Route path="/report/:studentId" element={<WeeklyReport />} />
       <Route path="/goals/:studentId" element={<GoalsPage />} />
       <Route path="/topics/:studentId" element={<TopicsPage />} />
+      <Route path="/wrong-topics/:studentId" element={<WrongTopicsPage />} />
     </Routes>
   );
 }
