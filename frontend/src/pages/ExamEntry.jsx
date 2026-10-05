@@ -90,6 +90,18 @@ export default function ExamEntry() {
     });
   };
 
+  // Bir dersin konu bazlı toplamları (ders yanlış/boş ile kıyaslamak için)
+  const getTopicSums = (subjectId) => {
+    const analyses = topicAnalyses[subjectId] ? Object.values(topicAnalyses[subjectId]) : [];
+    return analyses.reduce(
+      (acc, a) => ({
+        wrong: acc.wrong + (a.wrongCount || 0),
+        blank: acc.blank + (a.blankCount || 0),
+      }),
+      { wrong: 0, blank: 0 }
+    );
+  };
+
   const penaltyDivisor = student?.examType === 'LGS' ? 3 : 4;
 
   const calculateNet = (result) => {
@@ -137,6 +149,19 @@ export default function ExamEntry() {
             topicAnalyses: analyses,
           };
         });
+
+      // Konu bazlı dağıtım validasyonu: toplam, ders sonucunu aşamaz
+      for (const r of activeResults) {
+        const sums = getTopicSums(r.subjectId);
+        if (sums.wrong > r.wrongCount || sums.blank > r.blankCount) {
+          const subject = subjects.find(s => s.id === r.subjectId);
+          toast.error(
+            `${subject?.name}: Konu bazlı toplam (${sums.wrong}Y + ${sums.blank}B), ders sonucunu (${r.wrongCount}Y + ${r.blankCount}B) aşıyor`
+          );
+          setSubmitting(false);
+          return;
+        }
+      }
 
       await createExam({
         studentId: parseInt(studentId),
@@ -259,6 +284,12 @@ export default function ExamEntry() {
                 const { correct, net } = calculateNet(result);
                 const isExpanded = expandedSubject === subject.id;
                 const hasErrors = result.wrongCount > 0 || result.blankCount > 0;
+                const topicSums = getTopicSums(subject.id);
+                const remainingWrong = result.wrongCount - topicSums.wrong;
+                const remainingBlank = result.blankCount - topicSums.blank;
+                const overLimit = remainingWrong < 0 || remainingBlank < 0;
+                const distributed = topicSums.wrong + topicSums.blank;
+                const toDistribute = result.wrongCount + result.blankCount;
 
                 return (
                   <div key={subject.id} className="glass-card overflow-hidden">
@@ -278,8 +309,8 @@ export default function ExamEntry() {
                         {/* Konu analizi butonu - mobilde üstte */}
                         {hasErrors && subject.topics?.length > 0 && (
                           <button type="button" onClick={() => setExpandedSubject(isExpanded ? null : subject.id)}
-                            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isExpanded ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10'}`}>
-                            {isExpanded ? '▲ Kapat' : '▼ Konu'}
+                            className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${overLimit ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-300 dark:border-rose-500/30' : isExpanded ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10'}`}>
+                            {isExpanded ? '▲ Kapat' : `▼ Konu${distributed > 0 ? (distributed >= toDistribute && !overLimit ? ' ✓' : ` ${Math.min(distributed, toDistribute)}/${toDistribute}`) : ''}`}
                           </button>
                         )}
                       </div>
@@ -312,22 +343,73 @@ export default function ExamEntry() {
                     </div>
 
                     {isExpanded && subject.topics && (
-                      <div className="border-t border-slate-200 dark:border-white/5 p-4 bg-slate-50 dark:bg-white/[0.01]">
-                        <p className="text-xs text-slate-500 mb-3">Hangi konulardan yanlış/boş yaptığını belirt (opsiyonel):</p>
+                      <div className={`border-t p-4 ${overLimit ? 'border-rose-200 dark:border-rose-500/20 bg-rose-50/50 dark:bg-rose-500/[0.03]' : 'border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.01]'}`}>
+                        {/* Durum çubuğu: dağıtım bütçesi */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                          <p className="text-xs text-slate-500">Hangi konulardan yanlış/boş yaptığını işaretle (opsiyonel):</p>
+                          <div className="flex items-center gap-2">
+                            {result.wrongCount > 0 && (
+                              <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${remainingWrong < 0 ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400' : remainingWrong === 0 ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-500'}`}>
+                                YANLIŞ: {topicSums.wrong}/{result.wrongCount}
+                              </span>
+                            )}
+                            {result.blankCount > 0 && (
+                              <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${remainingBlank < 0 ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400' : remainingBlank === 0 ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-500/10 text-amber-500'}`}>
+                                BOŞ: {topicSums.blank}/{result.blankCount}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {overLimit && (
+                          <div className="mb-3 p-2.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                            ⚠️ Konu bazlı toplam, ders sonucunu aşıyor — azaltmadan kaydedemezsin.
+                          </div>
+                        )}
+
+                        {/* Sütun başlıkları */}
+                        <div className="grid grid-cols-[1fr_56px_56px] gap-2 px-2 mb-1">
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Konu</span>
+                          <span className="text-[10px] font-semibold text-rose-500 dark:text-rose-400 uppercase text-center">Yanlış</span>
+                          <span className="text-[10px] font-semibold text-amber-500 dark:text-amber-400 uppercase text-center">Boş</span>
+                        </div>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {subject.topics.map(topic => {
                             const analysis = topicAnalyses[subject.id]?.[topic.id] || { wrongCount: 0, blankCount: 0 };
+                            const wrongMax = remainingWrong + (analysis.wrongCount || 0);
+                            const blankMax = remainingBlank + (analysis.blankCount || 0);
+                            const wrongDisabled = remainingWrong <= 0 && !(analysis.wrongCount > 0);
+                            const blankDisabled = remainingBlank <= 0 && !(analysis.blankCount > 0);
+
+                            const handleTopicChange = (field, value, max) => {
+                              let v = Math.max(0, parseInt(value) || 0);
+                              if (max >= 0) v = Math.min(v, max);
+                              updateTopicAnalysis(subject.id, topic.id, field, v);
+                            };
+
                             return (
-                              <div key={topic.id} className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
-                                <span className="text-xs text-slate-600 dark:text-slate-400 flex-1 truncate" title={topic.name}>{topic.name}</span>
-                                <input type="number" min="0" max="10" value={analysis.wrongCount || ''} onChange={e => updateTopicAnalysis(subject.id, topic.id, 'wrongCount', e.target.value)} placeholder="Y"
-                                  className="w-12 px-2 py-1 bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded text-slate-900 dark:text-white text-center text-xs focus:outline-none focus:border-rose-500/50" />
-                                <input type="number" min="0" max="10" value={analysis.blankCount || ''} onChange={e => updateTopicAnalysis(subject.id, topic.id, 'blankCount', e.target.value)} placeholder="B"
-                                  className="w-12 px-2 py-1 bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 rounded text-slate-900 dark:text-white text-center text-xs focus:outline-none focus:border-amber-500/50" />
+                              <div key={topic.id} className="grid grid-cols-[1fr_56px_56px] items-center gap-2 p-2 rounded-lg bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+                                <span className={`text-xs truncate ${(analysis.wrongCount || 0) + (analysis.blankCount || 0) > 0 ? 'font-semibold text-slate-800 dark:text-slate-200' : 'text-slate-500'}`} title={topic.name}>{topic.name}</span>
+                                <input type="number" min="0" max={Math.max(0, wrongMax)} value={analysis.wrongCount || ''} disabled={wrongDisabled}
+                                  onChange={e => handleTopicChange('wrongCount', e.target.value, wrongMax)} placeholder="0" aria-label={`${topic.name} yanlış`}
+                                  className="w-full px-2 py-1.5 bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-lg text-slate-900 dark:text-white text-center text-xs font-bold focus:outline-none focus:border-rose-500/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all" />
+                                <input type="number" min="0" max={Math.max(0, blankMax)} value={analysis.blankCount || ''} disabled={blankDisabled}
+                                  onChange={e => handleTopicChange('blankCount', e.target.value, blankMax)} placeholder="0" aria-label={`${topic.name} boş`}
+                                  className="w-full px-2 py-1.5 bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 rounded-lg text-slate-900 dark:text-white text-center text-xs font-bold focus:outline-none focus:border-amber-500/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all" />
                               </div>
                             );
                           })}
                         </div>
+
+                        {!overLimit && (remainingWrong > 0 || remainingBlank > 0) && (
+                          <p className="text-[10px] text-slate-400 mt-2 px-1">
+                            {remainingWrong > 0 && `${remainingWrong} yanlış`}
+                            {remainingWrong > 0 && remainingBlank > 0 && ' ve '}
+                            {remainingBlank > 0 && `${remainingBlank} boş`}
+                            {' '}henüz konuya dağıtılmadı — dağıtmasan da kaydedebilirsin.
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

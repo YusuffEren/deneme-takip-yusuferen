@@ -40,7 +40,7 @@ def seed():
                 "Sözcük Türleri", "Cümlenin Ögeleri", "Fiilde Çatı",
             ]},
             {"name": "Matematik", "total_questions": 20, "coefficient": 4.0, "order": 2, "topics": [
-                "Üslü İfadeler", "Kareköklü İfadeler", "Veri Analizi",
+                "Çarpanlar ve Katlar", "Üslü İfadeler", "Kareköklü İfadeler", "Veri Analizi",
                 "Cebirsel İfadeler", "Doğrusal Denklemler", "Eşitsizlikler",
                 "Olasılık", "Dönüşüm Geometrisi", "Üçgenler", "Eşlik ve Benzerlik",
                 "Geometrik Cisimler", "Prizmalar", "Piramitler",
@@ -55,6 +55,7 @@ def seed():
                 "Bir Kahraman Doğuyor", "Milli Uyanış",
                 "Milli Bir Destan", "Atatürkçülük ve Çağdaşlaşma",
                 "Demokratikleşme Çabaları", "Atatürk Dönemi Dış Politika",
+                "Atatürk'ün Ölümü ve Sonrası",
             ]},
             {"name": "Din Kültürü", "total_questions": 10, "coefficient": 1.0, "order": 5, "topics": [
                 "Kader İnancı", "Zekât ve Sadaka", "Din ve Hayat",
