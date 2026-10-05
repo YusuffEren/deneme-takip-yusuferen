@@ -99,18 +99,3 @@ def root():
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
-
-
-# ---- GECICI TANILAMA ROTASI (deploy sonrasi kaldirilacak) ----
-from fastapi import Request  # noqa: E402
-
-@app.api_route("/{rest_of_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def debug_catch_all(rest_of_path: str, request: Request):
-    return {
-        "debug": True,
-        "caughtPath": rest_of_path,
-        "urlPath": request.url.path,
-        "rootPath": request.scope.get("root_path", ""),
-        "rawPath": (request.scope.get("raw_path") or b"").decode("utf-8", "replace"),
-        "headers": {k: v for k, v in request.headers.items()},
-    }
